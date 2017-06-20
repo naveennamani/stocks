@@ -7,6 +7,7 @@ var MongoClient = require('mongodb').MongoClient;
 
 app.use('/app', express.static(path.join(__dirname, 'app')));
 
+/*
 app.get('/stock/:name', function (req, res) {
 	// from yahoo API
     console.log(req.params.name);
@@ -19,8 +20,10 @@ app.get('/stock/:name', function (req, res) {
     });
 
 });
+*/
 
 app.get('/stocks/:name',function(req,res) {
+	//console.log(req);
 	console.log(req.params.name);
 	//var q='http://www.alphavantage.co/query?function=GLOBAL_QUOTE&apikey=GMKL9INXICS0JYIW&'+req.params.name;
 	var q='http://www.google.com/finance/info?q=NSE:'+req.params.name;
@@ -60,22 +63,7 @@ app.get('/companylist', function (req, res, next) {
     });
 });
 
-app.get('/delete/:name', function (req, res, next) {
-    MongoClient.connect('mongodb://127.0.0.1:27017/project', function (err, db) {
-        if (err) {
-            throw err;
-        } else {
-            console.log("successfully connected to the database");
-        }
-        var collection = db.collection('nsedb');
-        collection.find({}).toArray(function (err, results) {
-            console.log(results);
-            res.json({ results });
-            db.close();
-        });
-    });
-});
-
+/*
 app.post('/remove/:removeitem', function (req, res, next) {
     MongoClient.connect('mongodb://127.0.0.1:27017/project', function (err, db) {
         if (err) {
@@ -89,6 +77,7 @@ app.post('/remove/:removeitem', function (req, res, next) {
 		res.end(false);
     });
 });
+*/
 
 app.listen(4000);
 console.log("server running on 4000");

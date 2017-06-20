@@ -10,10 +10,10 @@
 			$scope.tickernames[x.symbol]=x.Name;
 			$scope.tickerchartdata[x.symbol]=[[],[]];
 		});
-		console.log(list.length);
+		//console.log(list.length);
 	});
 
-	$scope.view = false;
+	//$scope.view = false;
 	$scope.show = function () {
 	    return  $scope.stocklist!=null && $scope.stocklist.length != undefined;
 	};
@@ -21,13 +21,14 @@
 	$scope.upload = function (change) {
 		return 'http://images.financialcontent.com/studio-6.0/arrows/arrow5'+(change.match(/\-/g)?'down':'up')+'.png';
 	};
+	
+	/*
 	$scope.toggleSuggest = function () {
 		if ($scope.name == '') $('p').hide();
 		else $('p').show();
 	};
+	*/
 	$scope.addcompany = function (name) {
-		$scope.pageview=true;
-		$scope.coverview=false;
 		var _symbol = $scope.name.split("|")[1].replace(/ /g, "");
 		testservice.addentry(_symbol);
 		$scope.tickercomp=$scope.tickername= _symbol;
@@ -35,7 +36,7 @@
 			$scope.stocklist = list;
 			localStorage.setItem('stockList', JSON.stringify($scope.stocklist));
 		});
-		$scope.showtable = true;
+		//$scope.showtable = true;
 		$scope.showtickerchart($scope.tickername);
 		//$scope.showgraph(_symbol, 'TIME_SERIES_INTRADAY','tickerchart');		
 	};
@@ -77,11 +78,14 @@
 			$scope.stocklist.forEach(function (x) {
 				testservice.name.push(x["t"]);
 			});
-		$scope.pageview=true;
 	};
 	$scope.remove = function (id) {
 	    $scope.stocklist.splice(id, 1);
 	    console.log($scope.stocklist);
+		if($scope.stocklist!=undefined && $scope.stocklist.length!=undefined)
+			$scope.stocklist.forEach(function (x) {
+				testservice.name.push(x["t"]);
+			});
 		localStorage.setItem('stockList', JSON.stringify($scope.stocklist));
 	};
 	

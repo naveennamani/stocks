@@ -25,9 +25,9 @@
         </div>
 		<div id="content"class="container-fluid">
 			<div class="row">
-				<nav class="nav ">
+				<nav class="nav">
 					<div class="row">
-						<img src="http://www.stockexchangebank.com/ICA%20Logo.JPG" style="height:100px;" />
+						<img src="http://www.stockexchangebank.com/ICA%20Logo.JPG" style="height:100px;padding-left:20px" />
 					</div>
 				</nav>
 			</div>
@@ -45,9 +45,9 @@
                         <option ng-repeat="company  in companylist">{{company.Name}} | {{company.symbol}}</option>
                     </datalist>
 					-->
-                <button type="button" ng-click="addcompany(name)" class="btn btn-primary" data-toggle="tooltip" data-placement="top" title="Click to add your favourite company">
-                        ADD
-                </button>
+					<button type="button" ng-click="addcompany(name)" class="btn btn-primary" data-toggle="tooltip" data-placement="top" title="Click to add your favourite company">
+							ADD
+					</button>
 				</div>
 			</div>		   
 			<div class="row" ng-show="show()">
@@ -110,8 +110,6 @@
                     </div>
                 </div>
             </div>
-             
-
-</div>
+		</div>
 	</body>
 </html>

@@ -61,6 +61,7 @@
 	    return defer.promise;
 	};
 	
+	/*
 	this.deletedb = function(removeitem) {
 		var url ='http://localhost:4000/remove/'+ removeitem;
 		$http.post(url).then(function (response) {
@@ -73,5 +74,6 @@
 		};
 		return false;
 	};
+	*/
 
 }]);
