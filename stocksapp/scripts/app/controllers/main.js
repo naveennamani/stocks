@@ -11,74 +11,32 @@
 			$scope.tickerchartdata[x.symbol]=[[],[]];
 		});
 		console.log(list.length);
-		//manage_companies2();
 	});
 
-	$scope.testingind=0;
-	function manage_companies() {
-		testservice.getdata('/history/function=TIME_SERIES_DAILY&symbol=NSE:'+$scope.companylist[$scope.testingind].symbol+'&interval=1min&outputsize=compact').then(function(r) {
-			console.log(r,$scope.testingind);
-			if('Error Message' in r)
-				testservice.deletedb($scope.companylist[$scope.testingind].symbol);
-			window.tempresponse=r;
-			$scope.testingind++;
-			if($scope.testingind<$scope.companylist.length)
-				setTimeout(manage_companies,100);
-			else
-				alert('Testing done for 300 companies');
-			//alert(r);
-		});
-	}
-	function manage_companies2() {
-		var cns=$scope.companylist.slice($scope.testingind,$scope.testingind+10);
-		$scope.testingind+=cns.length;
-		cns.forEach(function(v,i) {
-			this[i]=v.symbol;
-		});
-		testservice.getdata('/stocks/'+cns).then(function(r) {
-			r=r.replace(/\/\//g,'');
-			console.log(r,$scope.testingind);
-			if('Error Message' in r)
-				testservice.deletedb($scope.companylist[$scope.testingind].symbol);
-			window.tempresponse=r;
-			$scope.testingind++;
-			if($scope.testingind<$scope.companylist.length)
-				setTimeout(manage_companies,100);
-			else
-				alert('Testing done for 300 companies');
-			//alert(r);
-		});
-	}
 	$scope.view = false;
 	$scope.show = function () {
 	    return  $scope.stocklist!=null && $scope.stocklist.length != undefined;
 	};
 
 	$scope.upload = function (change) {
-		//return 'http://images.financialcontent.com/studio-6.0/arrows/arrow5'+change.match(/\-/g)?'down':'up'+'.png';
-		if (!change.match(/\-/g)) {
-			return 'http://images.financialcontent.com/studio-6.0/arrows/arrow5up.png';
-		}
-		else {
-			return 'http://images.financialcontent.com/studio-6.0/arrows/arrow5down.png';
-		}
+		return 'http://images.financialcontent.com/studio-6.0/arrows/arrow5'+(change.match(/\-/g)?'down':'up')+'.png';
 	};
 	$scope.toggleSuggest = function () {
 		if ($scope.name == '') $('p').hide();
 		else $('p').show();
 	};
 	$scope.addcompany = function (name) {
-		$scope.tickername= name;
 		$scope.pageview=true;
 		$scope.coverview=false;
 		var _symbol = $scope.name.split("|")[1].replace(/ /g, "");
 		testservice.addentry(_symbol);
+		$scope.tickercomp=$scope.tickername= _symbol;
 		testservice.list().then(function (list) {
 			$scope.stocklist = list;
 			localStorage.setItem('stockList', JSON.stringify($scope.stocklist));
 		});
 		$scope.showtable = true;
-		//$scope.showtickerchart($scope.tickername);
+		$scope.showtickerchart($scope.tickername);
 		//$scope.showgraph(_symbol, 'TIME_SERIES_INTRADAY','tickerchart');		
 	};
 	$scope.timer;
@@ -446,24 +404,12 @@
 		document.getElementById('volumechart').innerHTML='';
 		*/
 	    Plotly.newPlot('chart',[
-            {
-                type:'scatter',x:x,y:open,name:'open',mode:'lines'
-            },
-            {
-                x:x,y:high,name:'high',
-            },
-            {
-                x:x,y:low,name:'low'
-            },
-            {
-                x:x,y:close,name:'close'
-            },
-			{
-				x:maxmarkersx,y:maxmarkersy,type:'scatter',mode:'markers',name:'max value',marker: {size:10}
-			},
-			{
-				x:minmarkersx,y:minmarkersy,type:'scatter',mode:'markers',name:'min value',marker: {size:10}
-			}
+			{type:'scatter',x:x,y:open,name:'open',mode:'lines'},
+			{x:x,y:high,name:'high'},
+            {x:x,y:low,name:'low'},
+            {x:x,y:close,name:'close'},
+			{x:maxmarkersx,y:maxmarkersy,type:'scatter',mode:'markers',name:'max value',marker: {size:10}},
+			{x:minmarkersx,y:minmarkersy,type:'scatter',mode:'markers',name:'min value',marker: {size:10}}
 	    ],{
 	        width:660,
 	        height:400,
