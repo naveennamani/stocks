@@ -21,11 +21,9 @@ app.get('/stock/:name', function (req, res) {
 });
 
 app.get('/stocks/:name',function(req,res) {
-	// from alphavantage API
 	console.log(req.params.name);
 	//var q='http://www.alphavantage.co/query?function=GLOBAL_QUOTE&apikey=GMKL9INXICS0JYIW&'+req.params.name;
 	var q='http://www.google.com/finance/info?q=NSE:'+req.params.name;
-	//var q='http://appfeeds.moneycontrol.com/jsonap//market/graph&format=&ind_id=9&range=1d&type=area';
 	console.log(q);
     request(q,function (error, response, body) {
 		if(error) res.send('error'+error);

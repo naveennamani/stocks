@@ -5,22 +5,16 @@
 		var stocklist = {};
 		var stock_list = [];
 		var url = 'http://localhost:4000/stocks/' + this.name;
-		//console.log("enter loop");
 		var defer = $q.defer();
 		$http.get(url).then(function (response) {
-			//console.log(response.data);
 			response = JSON.parse(response.data.replace(/\/\//g,""));
-			//console.log(response);
 			stocklist = response;
-			//console.log(stocklist.length);
 			if (stocklist.length == undefined) {
-				//console.log("enter if loop")
 				// console.log(typeof(stocklist));
 				stock_list.push(stocklist);
 				defer.resolve(stock_list);
 			}
 			else {
-				//console.log("enter else");
 				defer.resolve(stocklist);
 			}
 		}), function (data, status) {
@@ -35,12 +29,10 @@
 		if(this.name.indexOf(symbol)==-1)
 			this.name.push(symbol);
 		console.log(this.name);
-	//  localStorage.setItem("test", JSON.stringify(name));
 	};
 	this.database = function () {
 		var companylist = [];
 		var url = 'http://localhost:4000/companylist';
-		console.log("enter loop");
 		var defer = $q.defer();
 		$http.get(url).then(function (response) {
 			console.log(response);
