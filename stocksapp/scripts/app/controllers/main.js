@@ -1,13 +1,17 @@
 ﻿angular.module('myapp').controller('mainctrl', ['testservice', '$scope', '$interval', function (testservice, $scope, $interval) {
-
 	$scope.companylist = [];
+	$scope.tickernames={};
 	$scope.stocklist = [];
 	$scope.name = '';
 	$scope.symbol = '';
 	testservice.database().then(function (list) {      
 		$scope.companylist = list;
-		console.log(list);
-		manage_companies();
+		$scope.companylist.forEach(function(x) {
+			$scope.tickernames[x.symbol]=x.Name;
+			$scope.tickerchartdata[x.symbol]=[[],[]];
+		});
+		console.log(list.length);
+		//manage_companies2();
 	});
 
 	$scope.testingind=0;
@@ -25,20 +29,33 @@
 			//alert(r);
 		});
 	}
+	function manage_companies2() {
+		var cns=$scope.companylist.slice($scope.testingind,$scope.testingind+10);
+		$scope.testingind+=cns.length;
+		cns.forEach(function(v,i) {
+			this[i]=v.symbol;
+		});
+		testservice.getdata('/stocks/'+cns).then(function(r) {
+			r=r.replace(/\/\//g,'');
+			console.log(r,$scope.testingind);
+			if('Error Message' in r)
+				testservice.deletedb($scope.companylist[$scope.testingind].symbol);
+			window.tempresponse=r;
+			$scope.testingind++;
+			if($scope.testingind<$scope.companylist.length)
+				setTimeout(manage_companies,100);
+			else
+				alert('Testing done for 300 companies');
+			//alert(r);
+		});
+	}
 	$scope.view = false;
-	$scope.tickernames={};
-	/*
-	testservice.list().then(function (list) {
-		console.log(list);
-		$scope.stocklist = list;
-		console.log($scope.stocklist[0].Name);
-	});
-	*/
 	$scope.show = function () {
 	    return  $scope.stocklist!=null && $scope.stocklist.length != undefined;
 	};
 
 	$scope.upload = function (change) {
+		//return 'http://images.financialcontent.com/studio-6.0/arrows/arrow5'+change.match(/\-/g)?'down':'up'+'.png';
 		if (!change.match(/\-/g)) {
 			return 'http://images.financialcontent.com/studio-6.0/arrows/arrow5up.png';
 		}
@@ -55,25 +72,22 @@
 		$scope.pageview=true;
 		$scope.coverview=false;
 		var _symbol = $scope.name.split("|")[1].replace(/ /g, "");
-		var _name=$scope.name.split("|")[0].replace(/ /g,"");
-		$scope.tickernames[_symbol]=_name;
 		testservice.addentry(_symbol);
 		testservice.list().then(function (list) {
-			//console.log(list);
 			$scope.stocklist = list;
 			localStorage.setItem('stockList', JSON.stringify($scope.stocklist));
-			// $scope.cuisineList = JSON.parse(localStorage.getItem('cuisineList'));
 		});
 		$scope.showtable = true;
-		$scope.showgraph(_symbol, 'TIME_SERIES_INTRADAY','tickerchart');		
+		//$scope.showtickerchart($scope.tickername);
+		//$scope.showgraph(_symbol, 'TIME_SERIES_INTRADAY','tickerchart');		
 	};
 	$scope.timer;
 	$scope.init = function () {
 		//delete localStorage.stockList;
 	    $scope.stocklist = JSON.parse(localStorage.getItem('stockList'));
-		/*
 		$scope.timer=$interval(function() {
 			testservice.list().then(function (list) {
+				var ns='';
 				//console.log(list);
 				var present_list=[],names=[];
 				if($scope.stocklist.length!=0) {
@@ -82,6 +96,12 @@
 							if(v.t==list[i].t) {
 								present_list.push(list[i]);
 								names.push(v.t);
+								var dt=$scope.tickerchartdata[list[i].t][0];
+								var vv=$scope.tickerchartdata[list[i].t][1];
+								dt.push(new Date(v.lt_dts.replace(/Z/g,'')));
+								vv.push(vv.l);
+								if(vv.length>1 && vv[vv.length-1]!=vv[vv.length-2])
+									ns+=('Price Change for '+v.t+'\n');
 								break;
 							}
 					});
@@ -89,44 +109,56 @@
 				//console.log(present_list);
 				$scope.stocklist = present_list;
 				testservice.name=names;
+				$scope.showtickerchart(undefined,ns);
 				localStorage.setItem('stockList', JSON.stringify($scope.stocklist));
 				// $scope.cuisineList = JSON.parse(localStorage.getItem('cuisineList'));
 			});
-		},1000*10);
-		*/
-		/*
-		if($scope.stocklist==undefined) {
-			console.log('entered if undefined');
-			$scope.stockist=[];
-			$scope.coverview=true;
-			$scope.pageview=false;
-		}
-		else if($scope.stocklist.length!=0) {
-			$scope.coverview=false;
-			$scope.pageview=true;
-			console.log('stock has list');
-			$scope.stocklist.forEach(function (x) {
-				testservice.name.push(x["t"]);
-			});
-		}
-		else {
-			$scope.coverview=true;
-			$scope.pageview=false;
-		}
-		*/
+		},1000*3);
+		//$interval.cancel($scope.timer);
 		if($scope.stocklist!=undefined && $scope.stocklist.length!=undefined)
 			$scope.stocklist.forEach(function (x) {
 				testservice.name.push(x["t"]);
 			});
 		$scope.pageview=true;
 	};
-	//  $scope.cuisineList = JSON.parse(localStorage.getItem('cuisineList'));
 	$scope.remove = function (id) {
 	    $scope.stocklist.splice(id, 1);
 	    console.log($scope.stocklist);
 		localStorage.setItem('stockList', JSON.stringify($scope.stocklist));
 	};
 	
+	$scope.alertchange=function(str) {
+		console.log('changed');
+		if (!("Notification" in window)) {
+			alert("This browser does not support desktop notification");
+		}
+		else if (Notification.permission === "granted") {
+			var options = {
+			body: str,
+			icon: "icon.jpg",
+			dir : "ltr"
+			};
+			var notification = new Notification("Stocks update",options);
+		}
+		else if (Notification.permission !== 'denied') {
+			Notification.requestPermission(function (permission) {
+				if (!('permission' in Notification)) {
+					Notification.permission = permission;
+				}
+				if (permission === "granted") {
+					var options = {
+						body: str,
+						icon: "icon.jpg",
+						dir : "ltr"
+					};
+					var notification = new Notification("Stocks update",options);
+					setTimeout(notification.close.bind(notification),2000);
+				}
+			});
+		}
+	};
+
+	/*
 	$scope.showgraph = function (sym,type,id) {
 	    $scope.symbol = sym;
 	    var q = [];
@@ -148,7 +180,54 @@
 		};
 		func();
 	};
+	*/
+	
+	$scope.showgraph = function (sym) {
+	    $scope.symbol = sym;
+		console.log(sym);
+		testservice.getdata('/history/'+sym).then(function(resp) {
+			console.log(resp);
+			$scope.drawchart(resp);
+		});
+	};
+	
+	$scope.setcomp=function(sym) {
+		$scope.symbol=sym;
+		console.log(sym);
+		$("#chart").html("");
+		$("#volumechart").html("");
+		$scope.showgraph(sym);
+	};
 
+	$scope.tickerchartdata={};
+	$scope.tickercomp='';
+	$scope.showtickerchart=function(comp,ns) {
+		console.log(ns);
+		console.log(comp,$scope.tickercomp,$scope.tickername);
+		if(comp!=undefined || $scope.tickercomp!=$scope.tickername) {
+			console.log('clearing');
+			//$scope.tickerchartdata[comp]=[[],[]];
+			$scope.tickercomp=$scope.tickername=comp;
+		}
+		console.log($scope.tickerchartdata);
+	    Plotly.newPlot('tickerchart',[
+            {
+                type:'scatter',x:$scope.tickerchartdata[$scope.tickercomp][0],y:$scope.tickerchartdata[$scope.tickercomp][1],name:'price',
+            }
+		],{
+	        width:400,
+	        height:400,
+	        xaxis:{title:'Time'},
+	        yaxis:{title:'Stocks price'},
+	        shapes: {layer:'above'},
+			title:$scope.tickernames[$scope.tickercomp]
+	    });
+		console.log(ns);
+		if(ns!='')
+			$scope.alertchange(ns);
+	};
+	
+	/*
 	$scope.drawchart=function(data,id) {
 	    //data=JSON.parse(data);
 	    var x=[],y=[],ox=[],open=[],high=[],low=[],close=[],volume=[];
@@ -236,60 +315,33 @@
 		minmarkersx.push(x[indm]);
 		minmarkersy.push(min);
 		console.log(maxmarkersx,maxmarkersy,minmarkersx,minmarkersy);
-		*/
+		/
 	    Plotly.newPlot(id,[
             {
-                type:'scatter',
-                x:x,
-                y:open,
-                name:'open',
-				mode:'lines'
+                type:'scatter',x:x,y:open,name:'open',mode:'lines'
             },
             {
-                x:x,
-                y:high,
-                name:'high',
+                x:x,y:high,name:'high',
             },
             {
-                x:x,
-                y:low,
-                name:'low'
+                x:x,y:low,name:'low'
             },
             {
-                x:x,
-                y:close,
-                name:'close'
+                x:x,y:close,name:'close'
             },
 			{
-				x:maxmarkersx,
-				y:maxmarkersy,
-				type:'markers',
-				name:'max value',
-				marker: {
-					size:10,
-				}
+				x:maxmarkersx,y:maxmarkersy,type:'markers',name:'max value',marker: {size:10}
 			},
 			{
-				x:minmarkersx,
-				y:minmarkersy,
-				type:'markers',
-				name:'min value',
-				marker: {
-					size:10,
-				}
+				x:minmarkersx,y:minmarkersy,type:'markers',name:'min value',marker: {size:10}
 			}
 	    ],{
 	        width:(id=='tickerchart')?400:660,
 	        height:400,
-	        xaxis:{
-	            title:'Time'
-	        },
-	        yaxis:{
-	            title:'Stocks value'
-	        },
-	        shapes: {
-	            layer:'above'
-	        }
+	        xaxis:{title:'Time'},
+	        yaxis:{title:'Stocks value'},
+	        shapes: {layer:'above'},
+			title:$scope.tickernames[metadata["2. Symbol"]]
 	    });
 	    Plotly.newPlot('volumechart',[
             {
@@ -312,35 +364,20 @@
 	        }
 	    });
 	};
+	*/
 
-    $scope.draw_chart=function(data) {
-	    //data=JSON.parse(data);
-	    var x=[];
-	    var y=[];
-	    var open=[];
-	    var high=[];
-	    var low=[];
-	    var close=[];
-	    var volume=[];
-	    var metadata,tsdata;
-	    for(var key in data)
-	        if(key.match(/Meta Data/g)) metadata=data[key];
-	        else tsdata=data[key];
-	    console.log(data,metadata,tsdata);
-	    for(var key in tsdata) {
-	        x.push(new Date(new Date(key+" EDT").toLocaleString()));
-	        open.push(tsdata[key]["1. open"]);
-	        high.push(tsdata[key]["2. high"]);
-	        low.push(tsdata[key]["3. low"]);
-	        close.push(tsdata[key]["4. close"]);
-	        volume.push(tsdata[key]["5. volume"]);
+	$scope.drawchart=function(data) {
+	    data=data.dataset;
+	    var x=[],y=[],ox=[],open=[],high=[],low=[],close=[],volume=[];
+	    for(var i=0;i<data.data.length;i++) {
+	        x.push(new Date(data.data[i][0]));
+	        open.push(data.data[i][1]);
+	        high.push(data.data[i][2]);
+	        low.push(data.data[i][3]);
+	        close.push(data.data[i][5]);
+	        volume.push(data.data[i][6]);
 	    }
-	    console.log(x, y);
-	    window.tsdata=tsdata;
-		var dive = document.getElementById("chart");
-	    // dive.on('plotly_afterplot', function () {
-	        // $scope.view = true;
-	    // });
+	    console.log(x,y);
 		var maxmarkersx=[],maxmarkersy=[];
 		var minmarkersx=[],minmarkersy=[];
 		var max=0,ind=0,min=open[0],indm=0;
@@ -404,59 +441,46 @@
 		minmarkersx.push(x[indm]);
 		minmarkersy.push(min);
 		console.log(maxmarkersx,maxmarkersy,minmarkersx,minmarkersy);
-	   /* var div = document.getElementById("chart");
-	    div.on('plotly_afterplot', function () {
-	        $scope.view = true;
-	    });*/
-	    Plotly.newPlot('tickerchart',[
+		/*
+		document.getElementById('chart').innerHTML='';
+		document.getElementById('volumechart').innerHTML='';
+		*/
+	    Plotly.newPlot('chart',[
             {
-                type:'countour',
-                x:x,
-                y:open,
-                name:'open',
+                type:'scatter',x:x,y:open,name:'open',mode:'lines'
             },
             {
-                x:x,
-                y:high,
-                name:'high',
+                x:x,y:high,name:'high',
             },
             {
-                x:x,
-                y:low,
-                name:'low'
+                x:x,y:low,name:'low'
             },
             {
-                x:x,
-                y:close,
-                name:'close'
+                x:x,y:close,name:'close'
             },
+			{
+				x:maxmarkersx,y:maxmarkersy,type:'scatter',mode:'markers',name:'max value',marker: {size:10}
+			},
+			{
+				x:minmarkersx,y:minmarkersy,type:'scatter',mode:'markers',name:'min value',marker: {size:10}
+			}
+	    ],{
+	        width:660,
+	        height:400,
+	        xaxis:{title:'Time'},
+	        yaxis:{title:'Stocks value'},
+	        shapes: {layer:'above'},
+			title:$scope.tickernames[data.dataset_code]
+	    });
+	    Plotly.newPlot('volumechart',[
             {
                 x:x,
                 y:volume,
                 name:'volume',
-                visible:'legendonly'
+				type:'bar'
             },
-			{
-				x:maxmarkersx,
-				y:maxmarkersy,
-				type:'markers',
-				name:'max value',
-				marker: {
-					size:10,
-				}
-			},
-			{
-				x:minmarkersx,
-				y:minmarkersy,
-				type:'markers',
-				name:'min value',
-				marker: {
-					size:10,
-				}
-			}
-	    ], {
-	       
-	        width:400,
+	    ],{
+	        width:660,
 	        height:400,
 	        xaxis:{
 	            title:'Time'
@@ -466,8 +490,10 @@
 	        },
 	        shapes: {
 	            layer:'above'
-	        },
-			dragMode:'zoom'
+	        }
 	    });
 	};
 }]);
+function hidesplash() {
+	document.getElementById("splashscreen").style='display:none';
+}

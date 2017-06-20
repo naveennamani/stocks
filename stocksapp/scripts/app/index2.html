@@ -20,26 +20,23 @@
 		<!--controller-->
 		<script src="controllers/main.js"></script>
 	</head>
-	<body ng-app="myapp" ng-controller="mainctrl" data-ng-init="init()">
-		<div class='container-fluid' ng-show='coverview'>
-			<div class='row'>
-				<div class='col-md-12'>
-					<div id='welcome_tour'>welcome to the tour</div>
-				</div>
-				<div class="col-md-12" style="width:780px; height:40px;padding-left:30px;">
-					<label> Search name: </label>
-					<select ng-model="name">
-						<option ng-repeat="company  in companylist">{{company.Name}} | {{company.symbol}}</option>
-					</select>
-					<button ng-click="addcompany(name)" id="primary" class="btn btn-primary">ADD</button>
-				</div>
-			</div>
-		</div>
-		<div class="container-fluid" ng-show='pageview'>
+	<body id="body" ng-app="myapp" ng-controller="mainctrl" data-ng-init="init()">
+       <!----v class="splashscreen">
+        
+            <button class="fixed-bottom">get started </button>
+            STOCK EXCHANGE
+        </div>-->
+
+        <div id="splashscreen">
+            <img src="http://www.stockexchangebank.com/ICA%20Logo.JPG" style="height:100px;" />
+            <img src="https://www.experto.de/wp-content/uploads/fileadmin/assets/user_assets/5321/4/aktienanlage.jpg" style="width:1300px;height:500px;" />
+            <a href="javascript:hidesplash()" class="enter_link"><h4 style="font-weight:bold;color:darkblue;padding-left:450px;">WELCOME TO THE STOCK MARKET</h4></a>
+        </div>
+		<div id="content"class="container-fluid">
 			<div class="row">
-				<nav class="navbar navbar-light" style="background-color: #A0A0A0;">
+				<nav class="nav ">
 					<div class="row">
-						<h2 style="margin-left:20px;font-style:oblique;font-weight:bold;color:black;"> STOCK EXCHANGE </h2>
+						<img src="http://www.stockexchangebank.com/ICA%20Logo.JPG" style="height:100px;" />
 					</div>
 				</nav>
 			</div>
@@ -50,35 +47,41 @@
 					<select ng-model="name">
 						<option ng-repeat="company  in companylist">{{company.Name}} | {{company.symbol}}</option>
 					</select>
-			   <button ng-click="addcompany(name)" id="primary">ADD</button>  
+					<!--
+					<label style="font-weight:bold;font-size:medium;color:black;padding-top:10px;">Search name: <input list="companylist" name="myBrowser" ng-model="name" /></label>
+
+                 <datalist id="companylist">
+                        <option ng-repeat="company  in companylist">{{company.Name}} | {{company.symbol}}</option>
+                    </datalist>
+					-->
+                <button type="button" ng-click="addcompany(name)" class="btn btn-primary" data-toggle="tooltip" data-placement="top" title="Click to add your favourite company">
+                        ADD
+                </button>
 				</div>
-                <div class="col-md-2" style="font-weight:bold;">Real time:{{stocklist[0].LastTradeTime}} IST  {{stocklist[0].LastTradeDate}}</div>
 			</div>		   
 			<div class="row" ng-show="show()">
 				<div class="col-md-4" style="padding : 0px 0px 0px 0px;">
 					<div ng-model='graph' class="col-md-9" id='tickerchart' style="top:30px;"></div>
                 </div>
-				<div class="col-md-8" style="padding:0px 10px 0px 30px;margin-top:50px;">
-					<table class="table table-responsive" style="background-color:black;color:white">
+				<div class="col-md-8 table-responsive" style="padding:0px 10px 0px 30px;margin-top:50px;">
+					<table class="table table-inverse stock_list table-hover" >
 						<thead>
-							<tr class="tableheadings">
+							<tr class="tableheadings ">
 								<th>NAME</th>
 								<th>PRICE</th>
 								<th>CHANGE</th>
 								<th>% CHANGE</th>
-								<th>52WK HIGH</th>
-								<th>52WK LOW</th>
+								<th>Last updated</th>
 								<th></th>
 							</tr>
 						</thead>
 						<tbody>
-							<tr ng-repeat="stock in stocklist" ng-click="showgraph(stock.t,'TIME_SERIES_INTRADAY','tickerchart')">
-								<td><a  style='color:white' data-toggle="modal" data-target="#chartmodal">{{stock.t}}</a></td>
+							<tr ng-repeat="stock in stocklist" ng-click="showtickerchart(stock.t)">
+								<td><a  style='color:black' ng-click='setcomp(stock.t)' data-toggle="modal" data-target="#chartmodal">{{stock.t}}</a></td>
 								<td>{{stock.l}}</td>
 								<td>{{stock.c}}</td>
 								<td>{{stock.cp}}<img ng-src="{{upload(stock.cp)}}" /></td>
 								<td>{{stock.lt}}</td>
-								<td>{{stock.elt}}</td>
 								<td><button ng-click="remove($index)" type="button" class="close" aria-label="Close"> <span aria-hidden="true">&times;</span></button></td>
 							</tr>
 						</tbody>
@@ -92,22 +95,21 @@
                 <div class="modal-dialog" role="document">
                     <div class="modal-content" style="width:702px; height:1002px;">
                         <div class="modal-header">
-                            <h3 class="modal-title" id="charttitle" style="padding-left:300px;color:crimson;font-weight:bold">{{tickernames[symbol]}}</h3>
+                            <h3 class="modal-title" id="charttitle" style="text-align:center;color:crimson;font-weight:bold">{{tickernames[symbol]}}</h3>
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                 <span aria-hidden="true">&times;</span>
                             </button>
                         </div>
                         <div class="modal-body">
-                            <div>
+							<!--
                                 <div class="row" style="padding-left:180px;">
-                                    <button class="btn btn-primary" id="primary" ng-click="showgraph(symbol,'TIME_SERIES_INTRADAY','chart')">INTRADAY</button>
-                                    <button class="btn btn-primary" id="primary" ng-click="showgraph(symbol,'TIME_SERIES_DAILY','chart')">DAILY</button>
-                                    <button class="btn btn-primary" id="primary" ng-click="showgraph(symbol,'TIME_SERIES_WEEKLY','chart')">WEEKLY</button>
-                                    <button class="btn btn-primary" id="primary" ng-click="showgraph(symbol,'TIME_SERIES_MONTHLY','chart')">MONTHLY</button>
+                                    <button class="btn btn-primary" id="primary" ng-click="showgraph(symbol)">INTRADAY</button>
+                                    <button class="btn btn-primary" id="primary" ng-click="showgraph(symbol)">DAILY</button>
+                                    <button class="btn btn-primary" id="primary" ng-click="showgraph(symbol)">WEEKLY</button>
+                                    <button class="btn btn-primary" id="primary" ng-click="showgraph(symbol)">MONTHLY</button>
 
                                 </div>
-
-                            </div>
+							-->
                             <div class="row" >
                                 <div ng-model='graph' class="col-md-9" id='chart' style="top:30px;"></div>
 								<div ng-model='graph' class="col-md-9" id='volumechart' style="top:30px;"></div>
