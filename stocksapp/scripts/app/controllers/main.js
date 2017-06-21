@@ -23,12 +23,12 @@
 	$scope.addcompany = function (name) {
 		var _symbol = $scope.name.split("|")[1].replace(/ /g, "");
 		testservice.addentry(_symbol);
-		$scope.tickercomp=$scope.tickername= _symbol;
+		$scope.tickercomp= _symbol;
 		testservice.list().then(function (list) {
 			$scope.stocklist = list;
 			localStorage.setItem('stockList', JSON.stringify($scope.stocklist));
 		});
-		$scope.showtickerchart($scope.tickername);
+		$scope.showtickerchart($scope.tickercomp);
 	};
 	$scope.timer;
 	$scope.init = function () {
@@ -153,11 +153,11 @@
 	$scope.tickercomp='';
 	$scope.showtickerchart=function(comp,ns) {
 		console.log(ns);
-		console.log(comp,$scope.tickercomp,$scope.tickername);
-		if(comp!=undefined || $scope.tickercomp!=$scope.tickername) {
+		console.log(comp,$scope.tickercomp);
+		if(comp!=undefined) {
 			console.log('clearing');
 			//$scope.tickerchartdata[comp]=[[],[]];
-			$scope.tickercomp=$scope.tickername=comp;
+			$scope.tickercomp=comp;
 		}
 		console.log($scope.tickerchartdata);
 	    Plotly.newPlot('tickerchart',[
@@ -324,6 +324,7 @@
 		var maxmarkersx=[],maxmarkersy=[];
 		var minmarkersx=[],minmarkersy=[];
 		var max=0,ind=0,min=open[0],indm=0;
+		/*
 		open.forEach(function(a,b) {
 			if(max<a) {
 				max=a;
@@ -338,36 +339,24 @@
 		maxmarkersy.push(max);
 		minmarkersx.push(x[indm]);
 		minmarkersy.push(min);
-		var max=0,ind=0,min=high[0],indm=0;
+		*/
 		high.forEach(function(a,b) {
-			if(max<a) {
+			if(max<=a) {
 				max=a;
 				ind=b;
-			}
-			if(min>a) {
-				min=a;
-				indm=b;
 			}
 		});
 		maxmarkersx.push(x[ind]);
 		maxmarkersy.push(max);
-		minmarkersx.push(x[indm]);
-		minmarkersy.push(min);
-		var max=0,ind=0,min=low[0],indm=0;
 		low.forEach(function(a,b) {
-			if(max<a) {
-				max=a;
-				ind=b;
-			}
 			if(min>a) {
 				min=a;
 				indm=b;
 			}
 		});
-		maxmarkersx.push(x[ind]);
-		maxmarkersy.push(max);
 		minmarkersx.push(x[indm]);
 		minmarkersy.push(min);
+		/*
 		var max=0,ind=0,min=close[0],indm=0;
 		close.forEach(function(a,b) {
 			if(max<a) {
@@ -384,15 +373,16 @@
 		minmarkersx.push(x[indm]);
 		minmarkersy.push(min);
 		console.log(maxmarkersx,maxmarkersy,minmarkersx,minmarkersy);
+		*/
 		/*
 		document.getElementById('chart').innerHTML='';
 		document.getElementById('volumechart').innerHTML='';
 		*/
 	    Plotly.newPlot('chart',[
-			{type:'scatter',x:x,y:open,name:'open',mode:'lines'},
+			{type:'scatter',x:x,y:open,name:'open',mode:'lines',visible:'legendonly'},
 			{x:x,y:high,name:'high'},
             {x:x,y:low,name:'low'},
-            {x:x,y:close,name:'close'},
+            {x:x,y:close,name:'close',visible:'legendonly'},
 			{x:maxmarkersx,y:maxmarkersy,type:'scatter',mode:'markers',name:'max value',marker: {size:10}},
 			{x:minmarkersx,y:minmarkersy,type:'scatter',mode:'markers',name:'min value',marker: {size:10}}
 	    ],{
