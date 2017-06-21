@@ -1,7 +1,6 @@
 var express = require('express');
 var app = express();
 var path = require('path');
-var https = require('https');
 var request = require('request');
 var MongoClient = require('mongodb').MongoClient;
 
