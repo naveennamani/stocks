@@ -48,7 +48,7 @@
 								$scope.tickerchartdata[list[i].t][0].push(new Date(v.lt_dts.replace(/Z/g,'')));
 								vv.push(list[i].l);
 								if(vv.length>1 && vv[vv.length-1]!=vv[vv.length-2])
-									ns+=('Price Change for '+v.t+' '+v.c+'\n');
+									ns+=('Price Change for '+v.t+' '+list[i].c+'\n');
 								break;
 							}
 					});
@@ -178,8 +178,8 @@
 			displaylogo:false
 		});
 		console.log(ns);
-		if(ns!=undefined && ns!='')
-			$scope.alertchange(ns);
+		//if(ns!=undefined && ns!='')
+			//$scope.alertchange(ns);
 	};
 	
 	/*

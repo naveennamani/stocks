@@ -1,0 +1,35 @@
+var express = require('express');
+var app = express();
+var path = require('path');
+var https = require('https');
+var request = require('request');
+var MongoClient = require('mongodb').MongoClient;
+
+app.get('/',function(req,res) {
+	var q='https://www.quandl.com/api/v3/datasets.json?column_index=4&database_code=NSE';
+	console.log(q);
+    request(q,function (error, response, body) {
+        console.log(body);
+        res.send(body);
+    });
+});
+
+app.get('/companylist', function (req, res, next) {
+    MongoClient.connect('mongodb://127.0.0.1:27017/project', function (err, db) {
+        if (err) {
+            throw err;
+        } else {
+            console.log("successfully connected to the database");
+        }
+        var collection = db.collection('nse');
+        collection.find({}).toArray(function (err, results) {
+            console.log(results);
+            res.json({ results });
+            db.close();
+        });
+    });
+});
+
+app.listen(9000);
+
+console.log("server running");
