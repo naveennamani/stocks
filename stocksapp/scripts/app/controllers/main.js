@@ -10,10 +10,8 @@
 			$scope.tickernames[x.symbol]=x.Name;
 			$scope.tickerchartdata[x.symbol]=[[],[]];
 		});
-		console.log(list.length);
 	});
 
-	$scope.view = false;
 	$scope.show = function () {
 	    return  $scope.stocklist!=null && $scope.stocklist.length != undefined;
 	};
@@ -21,32 +19,23 @@
 	$scope.upload = function (change) {
 		return 'http://images.financialcontent.com/studio-6.0/arrows/arrow5'+(change.match(/\-/g)?'down':'up')+'.png';
 	};
-	$scope.toggleSuggest = function () {
-		if ($scope.name == '') $('p').hide();
-		else $('p').show();
-	};
+	
 	$scope.addcompany = function (name) {
-		$scope.pageview=true;
-		$scope.coverview=false;
 		var _symbol = $scope.name.split("|")[1].replace(/ /g, "");
 		testservice.addentry(_symbol);
-		$scope.tickercomp=$scope.tickername= _symbol;
+		$scope.tickercomp= _symbol;
 		testservice.list().then(function (list) {
 			$scope.stocklist = list;
 			localStorage.setItem('stockList', JSON.stringify($scope.stocklist));
 		});
-		$scope.showtable = true;
-		$scope.showtickerchart($scope.tickername);
-		//$scope.showgraph(_symbol, 'TIME_SERIES_INTRADAY','tickerchart');		
+		$scope.showtickerchart($scope.tickercomp);
 	};
 	$scope.timer;
 	$scope.init = function () {
-		//delete localStorage.stockList;
 	    $scope.stocklist = JSON.parse(localStorage.getItem('stockList'));
 		$scope.timer=$interval(function() {
 			testservice.list().then(function (list) {
 				var ns='';
-				//console.log(list);
 				var present_list=[],names=[];
 				if($scope.stocklist.length!=0) {
 					$scope.stocklist.forEach(function(v,i) {
@@ -56,8 +45,8 @@
 								names.push(v.t);
 								var dt=$scope.tickerchartdata[list[i].t][0];
 								var vv=$scope.tickerchartdata[list[i].t][1];
-								dt.push(new Date(v.lt_dts.replace(/Z/g,'')));
-								vv.push(vv.l);
+								$scope.tickerchartdata[list[i].t][0].push(new Date(v.lt_dts.replace(/Z/g,'')));
+								vv.push(list[i].l);
 								if(vv.length>1 && vv[vv.length-1]!=vv[vv.length-2])
 									ns+=('Price Change for '+v.t+'\n');
 								break;
@@ -69,7 +58,6 @@
 				testservice.name=names;
 				$scope.showtickerchart(undefined,ns);
 				localStorage.setItem('stockList', JSON.stringify($scope.stocklist));
-				// $scope.cuisineList = JSON.parse(localStorage.getItem('cuisineList'));
 			});
 		},1000*3);
 		//$interval.cancel($scope.timer);
@@ -77,26 +65,30 @@
 			$scope.stocklist.forEach(function (x) {
 				testservice.name.push(x["t"]);
 			});
-		$scope.pageview=true;
 	};
+
 	$scope.remove = function (id) {
 	    $scope.stocklist.splice(id, 1);
 	    console.log($scope.stocklist);
+		if($scope.stocklist!=undefined && $scope.stocklist.length!=undefined)
+			$scope.stocklist.forEach(function (x) {
+				testservice.name.push(x["t"]);
+			});
 		localStorage.setItem('stockList', JSON.stringify($scope.stocklist));
 	};
 	
 	$scope.alertchange=function(str) {
-		console.log('changed');
 		if (!("Notification" in window)) {
 			alert("This browser does not support desktop notification");
 		}
 		else if (Notification.permission === "granted") {
 			var options = {
-			body: str,
-			icon: "icon.jpg",
-			dir : "ltr"
+				body: str,
+				icon: "icon.png",
+				dir : "ltr"
 			};
 			var notification = new Notification("Stocks update",options);
+			setTimeout(notification.close.bind(notification),2000);
 		}
 		else if (Notification.permission !== 'denied') {
 			Notification.requestPermission(function (permission) {
@@ -106,7 +98,7 @@
 				if (permission === "granted") {
 					var options = {
 						body: str,
-						icon: "icon.jpg",
+						icon: "icon.png",
 						dir : "ltr"
 					};
 					var notification = new Notification("Stocks update",options);
@@ -161,16 +153,19 @@
 	$scope.tickercomp='';
 	$scope.showtickerchart=function(comp,ns) {
 		console.log(ns);
-		console.log(comp,$scope.tickercomp,$scope.tickername);
-		if(comp!=undefined || $scope.tickercomp!=$scope.tickername) {
+		console.log(comp,$scope.tickercomp);
+		if(comp!=undefined) {
 			console.log('clearing');
 			//$scope.tickerchartdata[comp]=[[],[]];
-			$scope.tickercomp=$scope.tickername=comp;
+			$scope.tickercomp=comp;
 		}
 		console.log($scope.tickerchartdata);
 	    Plotly.newPlot('tickerchart',[
             {
-                type:'scatter',x:$scope.tickerchartdata[$scope.tickercomp][0],y:$scope.tickerchartdata[$scope.tickercomp][1],name:'price',
+                type:'scatter',
+				x:$scope.tickerchartdata[$scope.tickercomp][0],
+				y:$scope.tickerchartdata[$scope.tickercomp][1],
+				name:'price',
             }
 		],{
 	        width:400,
@@ -179,9 +174,11 @@
 	        yaxis:{title:'Stocks price'},
 	        shapes: {layer:'above'},
 			title:$scope.tickernames[$scope.tickercomp]
-	    });
+	    },{
+			displaylogo:false
+		});
 		console.log(ns);
-		if(ns!='')
+		if(ns!=undefined && ns!='')
 			$scope.alertchange(ns);
 	};
 	
@@ -275,24 +272,12 @@
 		console.log(maxmarkersx,maxmarkersy,minmarkersx,minmarkersy);
 		/
 	    Plotly.newPlot(id,[
-            {
-                type:'scatter',x:x,y:open,name:'open',mode:'lines'
-            },
-            {
-                x:x,y:high,name:'high',
-            },
-            {
-                x:x,y:low,name:'low'
-            },
-            {
-                x:x,y:close,name:'close'
-            },
-			{
-				x:maxmarkersx,y:maxmarkersy,type:'markers',name:'max value',marker: {size:10}
-			},
-			{
-				x:minmarkersx,y:minmarkersy,type:'markers',name:'min value',marker: {size:10}
-			}
+            {type:'scatter',x:x,y:open,name:'open',mode:'lines'},
+            {x:x,y:high,name:'high'},
+            {x:x,y:low,name:'low'},
+            {x:x,y:close,name:'close'},
+			{x:maxmarkersx,y:maxmarkersy,type:'markers',name:'max value',marker: {size:10}},
+			{x:minmarkersx,y:minmarkersy,type:'markers',name:'min value',marker: {size:10}}
 	    ],{
 	        width:(id=='tickerchart')?400:660,
 	        height:400,
@@ -303,9 +288,9 @@
 	    });
 	    Plotly.newPlot('volumechart',[
             {
-                x:x,
-                y:volume,
-                name:'volume',
+				x:x,
+				y:volume,
+				name:'volume',
 				type:'bar'
             },
 	    ],{
@@ -339,6 +324,7 @@
 		var maxmarkersx=[],maxmarkersy=[];
 		var minmarkersx=[],minmarkersy=[];
 		var max=0,ind=0,min=open[0],indm=0;
+		/*
 		open.forEach(function(a,b) {
 			if(max<a) {
 				max=a;
@@ -353,36 +339,24 @@
 		maxmarkersy.push(max);
 		minmarkersx.push(x[indm]);
 		minmarkersy.push(min);
-		var max=0,ind=0,min=high[0],indm=0;
+		*/
 		high.forEach(function(a,b) {
-			if(max<a) {
+			if(max<=a) {
 				max=a;
 				ind=b;
-			}
-			if(min>a) {
-				min=a;
-				indm=b;
 			}
 		});
 		maxmarkersx.push(x[ind]);
 		maxmarkersy.push(max);
-		minmarkersx.push(x[indm]);
-		minmarkersy.push(min);
-		var max=0,ind=0,min=low[0],indm=0;
 		low.forEach(function(a,b) {
-			if(max<a) {
-				max=a;
-				ind=b;
-			}
 			if(min>a) {
 				min=a;
 				indm=b;
 			}
 		});
-		maxmarkersx.push(x[ind]);
-		maxmarkersy.push(max);
 		minmarkersx.push(x[indm]);
 		minmarkersy.push(min);
+		/*
 		var max=0,ind=0,min=close[0],indm=0;
 		close.forEach(function(a,b) {
 			if(max<a) {
@@ -399,15 +373,16 @@
 		minmarkersx.push(x[indm]);
 		minmarkersy.push(min);
 		console.log(maxmarkersx,maxmarkersy,minmarkersx,minmarkersy);
+		*/
 		/*
 		document.getElementById('chart').innerHTML='';
 		document.getElementById('volumechart').innerHTML='';
 		*/
 	    Plotly.newPlot('chart',[
-			{type:'scatter',x:x,y:open,name:'open',mode:'lines'},
+			{type:'scatter',x:x,y:open,name:'open',mode:'lines',visible:'legendonly'},
 			{x:x,y:high,name:'high'},
             {x:x,y:low,name:'low'},
-            {x:x,y:close,name:'close'},
+            {x:x,y:close,name:'close',visible:'legendonly'},
 			{x:maxmarkersx,y:maxmarkersy,type:'scatter',mode:'markers',name:'max value',marker: {size:10}},
 			{x:minmarkersx,y:minmarkersy,type:'scatter',mode:'markers',name:'min value',marker: {size:10}}
 	    ],{
@@ -417,7 +392,9 @@
 	        yaxis:{title:'Stocks value'},
 	        shapes: {layer:'above'},
 			title:$scope.tickernames[data.dataset_code]
-	    });
+	    },{
+			displaylogo:false
+		});
 	    Plotly.newPlot('volumechart',[
             {
                 x:x,
@@ -437,7 +414,9 @@
 	        shapes: {
 	            layer:'above'
 	        }
-	    });
+	    },{
+			displaylogo:false
+		});
 	};
 }]);
 function hidesplash() {
